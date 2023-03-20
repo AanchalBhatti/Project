@@ -141,6 +141,8 @@ def return_payment():
         amount = request_details['amount']
         lender_address = request_details['lender_address']
         request_app_id = request_details['request_app_id']
+        accept_request_aap_id = request_details['accept_request_aap_id']
+        print('a')
         roi = request_details['roi']
         maturity_date = request_details['maturity_date']
 
@@ -153,7 +155,8 @@ def return_payment():
             try:
 
                 requestID_txn = creator_lender.return_by_borrower(algod_client, address, mnemonic_key,
-                                                                  lender_address, request_app_id,  amount, roi, maturity_date)
+                                                                  lender_address, request_app_id, accept_request_aap_id, amount, roi, maturity_date)
+
 
                 print(requestID_txn)
                 return jsonify(requestID_txn), 200

@@ -1,5 +1,6 @@
 from API import connection
-import time , datetime
+import time, datetime
+from algosdk import encoding
 
 # connect to indexer
 myindexer = connection.connect_indexer()
@@ -43,4 +44,19 @@ def get_address_from_application(app_id):
     response = myindexer.applications(app_id)
     account_address = response['application']['params']['creator']
     return account_address
+
+# gets the address from the txid
+def get_address_from_txid(tx_id):
+
+    print('hii')
+    # Get the creator address of the application
+    tx_info = myindexer.search_transactions(txid=tx_id)
+    print(tx_info)
+    sender_pk = tx_info["transactions"][0]["sender"]
+    print(sender_pk)
+    # sender_address = encoding.encode_address(sender_pk)
+
+    # response = myindexer.applications(app_id)
+    # account_address = response['application']['params']['creator']
+    return sender_pk
 
