@@ -13,6 +13,8 @@ cors = CORS(app, resources={
 # setting up the connection with algorand client
 algod_client = connection.algod_conn()
 
+
+#CREATING ACCOUNTS
 @app.route('/create_account', methods=["POST"])
 def create_account():
     try:
@@ -33,7 +35,7 @@ def create_account():
                  #give the user id for the user
                 try:
 
-                    usertxn = create_account_module.create_app(algod_client, address,mnemonic_key, usertype)
+                    usertxn = create_account_module.create_app(algod_client, address, mnemonic_key, usertype)
                     return jsonify(usertxn), 200
 
                 except Exception as error:
@@ -93,7 +95,45 @@ def create_request():
         return jsonify(error_msg), 400
 
 
-# creating loan request from the borrower
+# # accepting loan request from the borrower
+# @app.route('/accept_request', methods=["POST"])
+# def accept_request():
+#     try:
+#         #getting the details of lender who accepted the request
+#         request_details = request.get_json()
+#         address = request_details['wallet_address']
+#         lender_app_id = request_details['lender_app_id']
+#         request_app_id = request_details['request_app_id']
+#         amount = request_details['amount']
+#         lender_mnemonic_key = request_details['lender_mnemonic_key']
+#
+#     except Exception as error:
+#         return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+#
+#     try:
+#         if CommonFunctions.check_balance(address, 3000):
+#
+#             try:
+#
+#                 requestID_txn = creator_lender.accept_request_app(algod_client, address, lender_mnemonic_key,
+#                                                                   lender_app_id, request_app_id, amount)
+#
+#                 print(requestID_txn)
+#                 return jsonify(requestID_txn), 200
+#             except Exception as error:
+#
+#                 error_msg = {"message": str(error)}
+#                 return jsonify(error_msg), 500
+#
+#         else:
+#             error_msg = {"message": "To create a request, Minimum Balance should be 3000 microAlgos"}
+#             return jsonify(error_msg), 400
+#     except Exception as wallet_error:
+#         error_msg = {"message": str(wallet_error)}
+#         return jsonify(error_msg), 400
+
+
+# accepting loan request from the borrower
 @app.route('/accept_request', methods=["POST"])
 def accept_request():
     try:
@@ -102,8 +142,9 @@ def accept_request():
         address = request_details['wallet_address']
         lender_app_id = request_details['lender_app_id']
         request_app_id = request_details['request_app_id']
-        amount = request_details['amount']
+        l_amount = request_details['l_amount']
         lender_mnemonic_key = request_details['lender_mnemonic_key']
+        is_counter_offer = int(request_details['counter_offer'])   #1 for yes and 0 for no
 
     except Exception as error:
         return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
@@ -114,7 +155,48 @@ def accept_request():
             try:
 
                 requestID_txn = creator_lender.accept_request_app(algod_client, address, lender_mnemonic_key,
-                                                                  lender_app_id, request_app_id, amount)
+                                                                  lender_app_id, request_app_id, l_amount, is_counter_offer)
+
+                print(requestID_txn)
+                return jsonify(requestID_txn), 200
+            except Exception as error:
+
+                error_msg = {"message": str(error)}
+                return jsonify(error_msg), 500
+
+        else:
+            error_msg = {"message": "To create a request, Minimum Balance should be 3000 microAlgos"}
+            return jsonify(error_msg), 400
+    except Exception as wallet_error:
+        error_msg = {"message": str(wallet_error)}
+        return jsonify(error_msg), 400
+
+
+# borrower's response to lender's counter
+@app.route('/counter_response_by_borrower', methods=["POST"])
+def borrower_counter():
+    try:
+        #getting the details of lender who accepted the request
+        request_details = request.get_json()
+        address = request_details['wallet_address']
+        lender_accept_app_id = request_details['lender_accept_app_id']
+        request_app_id = request_details['request_app_id']
+        l_amount = request_details['l_amount']
+        is_counter_offer = int(request_details['counter_offer'])   #1 for yes and 0 for no
+        b_amount = request_details['b_amount']
+        mnemonic_key = request_details['mnemonic_key']
+
+
+    except Exception as error:
+        return jsonify({'message': f'Payload Error! Key Missing: {error}'}), 500
+
+    try:
+        if CommonFunctions.check_balance(address, 3000):
+
+            try:
+
+                requestID_txn = creator_lender.borrower_counter_app(algod_client, address, mnemonic_key, lender_accept_app_id,
+                                                                  request_app_id, l_amount, b_amount, is_counter_offer)
 
                 print(requestID_txn)
                 return jsonify(requestID_txn), 200
@@ -171,6 +253,8 @@ def return_payment():
     except Exception as wallet_error:
         error_msg = {"message": str(wallet_error)}
         return jsonify(error_msg), 400
+
+
 
 # running the API
 if __name__ == "__main__":
